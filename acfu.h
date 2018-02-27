@@ -15,7 +15,7 @@ class source: public service_base {
  public:
   virtual GUID get_guid() = 0;
   virtual void get_info(file_info& info) = 0;
-  virtual bool is_newer(const char* version) = 0;
+  virtual bool is_newer(const file_info& info) = 0;
   virtual request::ptr create_request() = 0;
 
   static ptr g_get(const GUID& guid);
@@ -27,7 +27,7 @@ class cache: public service_base {
  public:
   class callback {
    public:
-    virtual void on_info_changed(const GUID& guid = pfc::guid_null) = 0;
+    virtual void on_info_changed(const GUID& guid, const file_info& info) = 0;
   };
 
   // Should be called from main thread 
