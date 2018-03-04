@@ -55,8 +55,8 @@ inline file_info_impl check::run(abort_callback& p_abort) {
   file_info_impl info;
   request_->run(info, p_abort);
   try {
-    static_api_ptr_t<cache> cache;
-    cache->set_info(guid_, info);
+    static_api_ptr_t<updates> updates;
+    updates->set_info(guid_, info);
   }
   catch (exception_service_not_found&) {
   }

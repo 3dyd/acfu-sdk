@@ -21,16 +21,18 @@ class source: public service_base {
   static ptr g_get(const GUID& guid);
 };
 
-class cache: public service_base {
-  FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(cache);
+class updates: public service_base {
+  FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(updates);
 
  public:
   class callback {
    public:
-    virtual void on_info_changed(const GUID& guid, const file_info& info) = 0;
+    virtual void on_info_changed(const GUID& guid, const file_info& info) {}
+    virtual void on_updates_available(const pfc::list_base_const_t<GUID>& ids) {}
   };
 
-  // Should be called from main thread 
+  // Should be called from main thread.
+  // Being invoked, may call callback::on_updates_available()
   virtual void register_callback(callback* callback) = 0;
   // Should be called from main thread
   virtual void unregister_callback(callback* callback) = 0;
@@ -48,7 +50,7 @@ FOOGUIDDECL const GUID source::class_guid =
 { 0x91aa2ed9, 0x2562, 0x4a5d, { 0x8d, 0x8, 0xbf, 0x43, 0xe, 0x1f, 0x77, 0x59 } };
 
 // {0CB0195A-3FFC-4BF6-84F4-BF7EDA25BE6E}
-FOOGUIDDECL const GUID cache::class_guid =
+FOOGUIDDECL const GUID updates::class_guid =
 { 0xcb0195a, 0x3ffc, 0x4bf6, { 0x84, 0xf4, 0xbf, 0x7e, 0xda, 0x25, 0xbe, 0x6e } };
 
 inline source::ptr source::g_get(const GUID& guid) {
