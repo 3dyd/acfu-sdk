@@ -84,4 +84,22 @@ class github_releases: public request {
   }
 };
 
+template <class t_github_conf>
+class github_latest_release: public github_releases<t_github_conf> {
+ protected:
+  virtual pfc::string8 form_releases_url() {
+    pfc::string8 url;
+    url << "https://api.github.com/repos/" << t_github_conf::get_owner()
+        << "/" << t_github_conf::get_repo() << "/releases/latest";
+    return url;
+  }
+
+  virtual void process_response(const rapidjson::Value& json, file_info& info) {
+    ACFU_EXPECT_JSON(json.IsObject());
+    if (is_acceptable(json)) {
+      process_release(json, info);
+    }
+  }
+};
+
 } // namespace acfu
