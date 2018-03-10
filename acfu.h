@@ -2,14 +2,14 @@
 
 namespace acfu {
 
-class request: public service_base {
+class NOVTABLE request: public service_base {
   FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(request);
 
  public:
   virtual void run(file_info& info, abort_callback& abort) = 0;
 };
 
-class source: public service_base {
+class NOVTABLE source: public service_base {
   FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(source);
 
  public:
@@ -18,10 +18,13 @@ class source: public service_base {
   virtual bool is_newer(const file_info& info) = 0;
   virtual request::ptr create_request() = 0;
 
+  virtual void context_menu_build(HMENU menu, unsigned id_base) {}
+  virtual void context_menu_command(unsigned id, unsigned id_base) {}
+
   static ptr g_get(const GUID& guid);
 };
 
-class updates: public service_base {
+class NOVTABLE updates: public service_base {
   FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(updates);
 
  public:
