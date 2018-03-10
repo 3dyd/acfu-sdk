@@ -48,7 +48,7 @@ class github_releases: public request {
     process_response(doc, info);
   }
 
- private:
+ protected:
   virtual pfc::string8 form_releases_url() {
     pfc::string8 url;
     url << "https://api.github.com/repos/" << t_github_conf::get_owner()
@@ -63,6 +63,9 @@ class github_releases: public request {
   virtual void process_release(const rapidjson::Value& release, file_info& info) {
     ACFU_EXPECT_JSON(release.HasMember("tag_name") && release["tag_name"].IsString());
     info.meta_set("version", release["tag_name"].GetString());
+
+    ACFU_EXPECT_JSON(release.HasMember("html_url") && release["html_url"].IsString());
+    info.meta_set("download_page", release["html_url"].GetString());
 
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
