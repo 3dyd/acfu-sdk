@@ -2,9 +2,10 @@
 
 #include "common.h"
 
-/***************************************************************************
-// For cases when plain version string is stored in a file.
-// Usage example:
+/******************************************************************************
+
+This helper can be used in case when plain version string is stored in a file.
+Usage example:
 
 #define MY_VERSION "1.0"
 
@@ -18,8 +19,8 @@ class MySource: public acfu::source, public acfu::plain_conf {
     return guid;
   }
   virtual void get_info(file_info& info) {
-    info.meta_set("name", "My Component Name");
-    info.meta_set("module", "foo_my_module");
+    info.meta_set("name", "My Component");
+    info.meta_set("module", "foo_mycomponent");
     info.meta_set("version", MY_VERSION);
   }
   virtual bool is_newer(const file_info& info) {
@@ -32,7 +33,7 @@ class MySource: public acfu::source, public acfu::plain_conf {
 
 static service_factory_t<MySource> g_my_source;
 
-***************************************************************************/ 
+******************************************************************************/
 
 namespace acfu {
 

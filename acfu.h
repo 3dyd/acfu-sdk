@@ -1,5 +1,38 @@
 #pragma once
 
+/******************************************************************************
+
+Component uses file_info to exchange information about Sources and updates.
+Meta fields are user-visible and can affect acfu behavior. Info fields are
+retained but unused by acfu, so Source can use they for its own needs (e.g.
+GitHub helper (./utils/github.h) stores there JSON of releases and assets.
+
+Recognized meta fields (none of them are required):
+
+"name" - name of the Source to be displayed in Sources list. Source GUID is
+displayed there if name is not provided.
+
+"module" - component providing this Source. Particularly useful if Source does
+not represent a component itself.
+
+"version" - version (current or latest). Note, acfu does not decide if updates
+are available basing on version (it is up to source::is_newer(), and it can use
+any other way, not involving "version") but acfu will try to display version if
+updates are available.
+
+"download_page" - URL to download page. If provided, Source context menu has
+item "Go to Download Page".
+
+"download_url" - URL for Source download. If provided, Source context menu has
+item "Download in Browser".
+
+Also all meta fields are displayed by "Properties" context menu item.
+
+Context menu of the Source is also can be extended using context_menu_build()
+and context_menu_command() methods.
+
+******************************************************************************/
+
 namespace acfu {
 
 class NOVTABLE request: public service_base {

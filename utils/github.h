@@ -5,6 +5,63 @@
 #include <rapidjson/writer.h>
 #include "common.h"
 
+/******************************************************************************
+
+These helpers can be used if Source is hosted on GitHub and uses standard
+release process there.
+
+Example of how to use latest release on GitHub:
+
+class MySource: public acfu::source, public acfu::github_conf {
+  const char* my_version() const {
+    return "1.0";
+  }
+  virtual GUID get_guid() {
+    static const GUID guid = {...};
+    return guid;
+  }
+  virtual void get_info(file_info& info) {
+    info.meta_set("version", my_version());
+    info.meta_set("name", "My Component");
+    info.meta_set("module", "foo_mycomponent");
+  }
+  virtual bool is_newer(const file_info& info) {
+    const char* version = info.meta_get("version", 0);
+    return acfu::compare_versions(version, my_version(), "v") > 0;
+  }
+  virtual acfu::request::ptr create_request() {
+    return new service_impl_t<acfu::github_latest_release<MySource>>();
+  }
+  // If project on GitHub is located at https://github.com/myname/myproject
+  // then need to return this config:
+  static const char* get_owner() { return "myname"; }
+  static const char* get_repo() { return "myproject"; }
+};
+static service_factory_t<MySource> g_my_source;
+
+If one needs to use more specific criteria, not just the latest release, then
+github_releases helper can be used:
+
+  virtual acfu::request::ptr create_request() {
+    return new service_impl_t<acfu::github_releases<MySource>>();
+  }
+
+Then in is_acceptable_release() one can make desision if particular release is
+acceptable.
+
+If one wants to provide "download_page" meta (see comment in ./acfu.h what is
+it for), need to implement is_acceptable_asset() method. Example:
+
+  static bool is_acceptable_asset(const rapidjson::Value& asset) {
+    if (asset.HasMember("name") && asset["name"].IsString()) {
+      pfc::string_extension ext(asset["name"].GetString());
+      return 0 == pfc::stricmp_ascii(ext, "fb2k-component");
+    }
+    return false;
+  }
+
+******************************************************************************/
+
 #define ACFU_EXPECT_JSON(x)  if (!(x)) throw std::logic_error("unexpected JSON schema")
 
 namespace acfu {
