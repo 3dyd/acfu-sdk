@@ -35,7 +35,10 @@ inline int compare_versions(const char* version1, const char* version2, const ch
 
 inline pfc::list_t<int> parse_version_string(const char* str, const char* prefix) {
   if (!str) {
-    throw version_error();
+    return {};
+  }
+  while (isspace(*str)) { // trim whitespace
+    str ++;
   }
   if (prefix && 0 == strncmp(str, prefix, strlen(prefix))) {
     str += strlen(prefix);
@@ -53,7 +56,12 @@ inline pfc::list_t<int> parse_version_string(const char* str, const char* prefix
       start = str + 1;
     }
     else if (*str < '0' || *str > '9') {
-      throw version_error();
+      while (isspace(*str)) { // trim trailing whitespace
+        str ++;
+      }
+      if ('\0' != *str) {
+        throw version_error();
+      }
     }
   }
   if (0 == parts.get_count()) {
