@@ -10,7 +10,7 @@ class version_error: public std::logic_error {
 };
 
 template <class t_service, class t_func>
-void for_each_service(t_func func) {
+void for_each_service(t_func&& func) {
   service_enum_t<t_service> e;
   for (service_ptr_t<t_service> ptr; e.next(ptr);) {
     func(ptr);
