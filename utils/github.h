@@ -95,10 +95,15 @@ class github_releases: public request {
     pfc::string8 url = form_releases_url();
     http_request::ptr request = t_github_conf::create_http_request();
 
-    file::ptr response = request->run(url.get_ptr(), abort);
+    file::ptr response = request->run_ex(url.get_ptr(), abort);
     pfc::array_t<uint8_t> data;
     response->read_till_eof(data, abort);
 
+    http_reply::ptr reply;
+    if (!response->cast(reply)) {
+      throw exception_service_extension_not_found();
+    }
+    
     rapidjson::Document doc;
     doc.Parse((const char*)data.get_ptr(), data.get_count());
     if (doc.HasParseError()) {
@@ -106,7 +111,16 @@ class github_releases: public request {
         << "error(" << doc.GetErrorOffset() << "): " << rapidjson::GetParseError_En(doc.GetParseError()));
     }
 
-    process_response(doc, info);
+    pfc::string8 status;
+    reply->get_status(status);
+    // RFC: Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
+    auto pos = status.find_first(' ');
+    if (~0 == pos || 0 != pfc::strcmp_partial(status.get_ptr() + pos + 1, "200 ")) {
+      process_error(doc, status.get_ptr());
+    }
+    else {
+      process_response(doc, info);
+    }
   }
 
  protected:
@@ -158,6 +172,17 @@ class github_releases: public request {
       if (t_github_conf::is_acceptable_release(release)) {
         return process_release(release, info);
       }
+    }
+  }
+
+ private:
+  void process_error(const rapidjson::Value& json, const char* http_status) {
+    if (json.IsObject() && json.HasMember("message") && json["message"].IsString()) {
+      throw exception_io_data(json["message"].GetString());
+    }
+    else {
+      throw exception_io_data(PFC_string_formatter()
+        << "unexpected response; HTTP status: " << http_status);
     }
   }
 };
