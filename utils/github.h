@@ -27,7 +27,7 @@ class MySource: public acfu::source, public acfu::github_conf {
   }
   virtual bool is_newer(const file_info& info) {
     const char* version = info.meta_get("version", 0);
-    return acfu::compare_versions(version, my_version(), "v") > 0;
+    return acfu::is_newer(version, my_version());
   }
   virtual acfu::request::ptr create_request() {
     return new service_impl_t<acfu::github_latest_release<MySource>>();

@@ -24,7 +24,7 @@ class MySource: public acfu::source, public acfu::plain_conf {
     info.meta_set("version", MY_VERSION);
   }
   virtual bool is_newer(const file_info& info) {
-    return acfu::compare_versions(info.meta_get("version", 0), MY_VERSION) > 0;
+    return acfu::is_newer(info.meta_get("version", 0), MY_VERSION);
   }
   virtual acfu::request::ptr create_request() {
     return new service_impl_t<acfu::plain_request<MySource>>();

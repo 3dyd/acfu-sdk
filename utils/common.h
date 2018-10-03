@@ -1,5 +1,6 @@
 #pragma once
 
+#include <regex>
 #include "../acfu.h"
 
 namespace acfu {
@@ -9,64 +10,58 @@ class version_error: public std::logic_error {
   version_error(): std::logic_error("invalid version string format") {}
 };
 
-template <class t_service, class t_func>
-void for_each_service(t_func&& func) {
-  service_enum_t<t_service> e;
-  for (service_ptr_t<t_service> ptr; e.next(ptr);) {
-    func(ptr);
+bool is_newer(const char* available, const char* installed);
+pfc::list_t<int> parse_version(std::string version);
+
+inline bool is_newer(const char* available, const char* installed) {
+  if (available && installed) {
+    try {
+      auto available_parts = parse_version(available);
+      auto installed_parts = parse_version(installed);
+      for (size_t i = 0; i < available_parts.get_size(); i ++) {
+        if (int diff = available_parts[i] - installed_parts[i]) {
+          return diff > 0;
+        }
+      }
+    }
+    catch (version_error&) {
+    }
   }
+  return false;
 }
 
-int compare_versions(const char* version1, const char* version2, const char* prefix = NULL);
-pfc::list_t<int> parse_version_string(const char* str, const char* prefix = NULL);
-
-inline int compare_versions(const char* version1, const char* version2, const char* prefix) {
-  auto parts1 = parse_version_string(version1, prefix);
-  auto parts2 = parse_version_string(version2, prefix);
-  for (size_t i = 0, count = pfc::max_t(parts1.get_count(), parts2.get_count()); i < count; i ++) {
-    int x1 = i < parts1.get_count() ? parts1[i] : 0;
-    int x2 = i < parts2.get_count() ? parts2[i] : 0;
-    if (int diff = x1 - x2) {
-      return diff;
-    }
-  }
-  return 0;
-}
-
-inline pfc::list_t<int> parse_version_string(const char* str, const char* prefix) {
-  if (!str) {
-    return {};
-  }
-  while (isspace(*str)) { // trim whitespace
-    str ++;
-  }
-  if (prefix && 0 == strncmp(str, prefix, strlen(prefix))) {
-    str += strlen(prefix);
-  }
-  pfc::list_t<int> parts;
-  for (auto start = str; ; str ++) {
-    if ('.' == *str || '\0' == *str) {
-      if (start == str) {
-        throw version_error();
-      }
-      parts.add_item(pfc::atodec<int>(start, str - start));
-      if ('\0' == *str) {
-        break;
-      }
-      start = str + 1;
-    }
-    else if (*str < '0' || *str > '9') {
-      while (isspace(*str)) { // trim trailing whitespace
-        str ++;
-      }
-      if ('\0' != *str) {
-        throw version_error();
-      }
-    }
-  }
-  if (0 == parts.get_count()) {
+inline pfc::list_t<int> parse_version(std::string version) {
+  const char* rule = "\\s*v?(\\d+)\\.(\\d+)(?:\\.(\\d+)(?:\\.(\\d+))?)?(?:[\\s-](alpha|beta|rc)[\\s\\.-]?(\\d+)?)?\\s*";
+  std::regex version_regex(rule, std::regex::icase);
+  std::smatch match;
+  if (!std::regex_match(version, match, version_regex)) {
     throw version_error();
   }
+
+  pfc::list_t<int> parts;
+  parts.set_count(6);
+
+  parts[0] = atoi(match[1].str().c_str());
+  parts[1] = atoi(match[2].str().c_str());
+  parts[2] = atoi(match[3].str().c_str());
+  parts[3] = atoi(match[4].str().c_str());
+
+  auto prerelease = match[5].str();
+  if (0 == pfc::stricmp_ascii("rc", prerelease.c_str())) {
+    parts[4] = -1;
+  }
+  else if (0 == pfc::stricmp_ascii("beta", prerelease.c_str())) {
+    parts[4] = -2;
+  }
+  else if (0 == pfc::stricmp_ascii("alpha", prerelease.c_str())) {
+    parts[4] = -3;
+  }
+  else {
+    parts[4] = 0;
+  }
+
+  parts[5] = atoi(match[6].str().c_str());
+
   return parts;
 }
 
