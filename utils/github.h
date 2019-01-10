@@ -34,8 +34,8 @@ class MySource: public acfu::source, public acfu::github_conf {
   }
   // If project on GitHub is located at https://github.com/myname/myproject
   // then need to return this config:
-  static const char* get_owner() { return "myname"; }
-  static const char* get_repo() { return "myproject"; }
+  static pfc::string get_owner() { return "myname"; }
+  static pfc::string get_repo() { return "myproject"; }
 };
 static service_factory_t<MySource> g_my_source;
 
@@ -67,11 +67,11 @@ it for), need to implement is_acceptable_asset() method. Example:
 namespace acfu {
 
 struct github_conf {
-  static const char* get_owner() {
+  static pfc::string get_owner() {
     throw pfc::exception_not_implemented("implement get_owner() in derived class");
   }
 
-  static const char* get_repo() {
+  static pfc::string get_repo() {
     throw pfc::exception_not_implemented("implement get_repo() in derived class");
   }
 
@@ -91,9 +91,14 @@ struct github_conf {
 template <class t_github_conf>
 class github_releases: public request {
  public:
-  virtual void run(file_info& info, abort_callback& abort) {
+  virtual void run(file_info& info, abort_callback& abort) override {
     pfc::string8 url = form_releases_url();
     http_request::ptr request = t_github_conf::create_http_request();
+
+    service_enum_t<authorization> e;
+    for (service_ptr_t<authorization> auth; e.next(auth);) {
+      auth->authorize(url.get_ptr(), request, abort);
+    }
 
     file::ptr response = request->run_ex(url.get_ptr(), abort);
     pfc::array_t<uint8_t> data;
@@ -190,14 +195,14 @@ class github_releases: public request {
 template <class t_github_conf>
 class github_latest_release: public github_releases<t_github_conf> {
  protected:
-  virtual pfc::string8 form_releases_url() {
+  virtual pfc::string8 form_releases_url() override {
     pfc::string8 url;
     url << "https://api.github.com/repos/" << t_github_conf::get_owner()
         << "/" << t_github_conf::get_repo() << "/releases/latest";
     return url;
   }
 
-  virtual void process_response(const rapidjson::Value& json, file_info& info) {
+  virtual void process_response(const rapidjson::Value& json, file_info& info) override {
     ACFU_EXPECT_JSON(json.IsObject());
     if (t_github_conf::is_acceptable_release(json)) {
       process_release(json, info);

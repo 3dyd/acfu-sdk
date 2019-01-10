@@ -35,6 +35,13 @@ and context_menu_command() methods.
 
 namespace acfu {
 
+class NOVTABLE authorization: public service_base {
+  FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(authorization);
+
+ public:
+  virtual void authorize(const char* url, http_request::ptr request, abort_callback& abort) = 0;
+};
+
 class NOVTABLE request: public service_base {
   FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(request);
 
@@ -76,6 +83,10 @@ class NOVTABLE updates: public service_base {
   virtual bool get_info(const GUID& guid, file_info& info) = 0;
   virtual void set_info(const GUID& guid, const file_info& info) = 0;
 };
+
+// {3C245A11-6EAE-4742-929F-1D02BC513C46}
+FOOGUIDDECL const GUID authorization::class_guid =
+{0x3c245a11, 0x6eae, 0x4742, { 0x92, 0x9f, 0x1d, 0x2, 0xbc, 0x51, 0x3c, 0x46 }};
 
 // {4E88EA57-ABDD-49AD-B72B-7C198DA27DBE}
 FOOGUIDDECL const GUID request::class_guid =

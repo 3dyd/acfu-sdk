@@ -11,7 +11,7 @@ Usage example:
 
 class MySource: public acfu::source, public acfu::plain_conf {
  public:
-  static const char* get_url() {
+  static pfc::string get_url() {
     return "https://example.com/version.txt";
   }
   virtual GUID get_guid() {
@@ -38,7 +38,7 @@ static service_factory_t<MySource> g_my_source;
 namespace acfu {
 
 struct plain_conf {
-  static const char* get_url() {
+  static pfc::string get_url() {
     throw pfc::exception_not_implemented("implement get_url() in derived class");
   }
 
@@ -53,6 +53,11 @@ class plain_request: public request {
   virtual void run(file_info& info, abort_callback& abort) {
     pfc::string8 url = t_plain_conf::get_url();
     http_request::ptr request = t_plain_conf::create_http_request();
+
+    service_enum_t<authorization> e;
+    for (service_ptr_t<authorization> auth; e.next(auth);) {
+      auth->authorize(url.get_ptr(), request, abort);
+    }
 
     file::ptr response = request->run(url.get_ptr(), abort);
     pfc::string8 version;
